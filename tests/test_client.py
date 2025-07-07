@@ -1,5 +1,6 @@
 import sys
 import types
+import os
 import unittest
 from unittest.mock import MagicMock
 
@@ -15,6 +16,7 @@ class _SSHClient:
         return MagicMock()
 paramiko_stub.SSHClient = _SSHClient
 sys.modules.setdefault("paramiko", paramiko_stub)
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from fmc_ssh.client import FMCSSHClient
 
@@ -26,12 +28,14 @@ class TestFMCSSHClient(unittest.TestCase):
         with self.assertRaises(ValueError):
             FMCSSHClient('host', '')
 
-    def test_run_command_delegates_to_send_and_wait(self):
+    def test_run_command_strips_prompt(self):
         client = FMCSSHClient('1.2.3.4', 'pass', ssh_client=MagicMock())
-        client._send_and_wait = MagicMock(return_value='ok')
+        client.prompt = ''
+        client._send_and_wait = MagicMock(return_value='out\nroot@host:~# ')
         result = client.run_command('ls')
         client._send_and_wait.assert_called_with('ls', ':~#')
-        self.assertEqual(result, 'ok')
+        self.assertEqual(result, 'out\n')
+        self.assertEqual(client.prompt, 'root@host:~#')
 
     def test_context_manager_calls_connect_and_close(self):
         client = FMCSSHClient('1.2.3.4', 'pass', ssh_client=MagicMock())
