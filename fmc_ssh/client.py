@@ -29,6 +29,8 @@ class FMCSSHClient:
         self.client: paramiko.SSHClient = ssh_client or paramiko.SSHClient()
         self.channel = None
         self.prompt = ""
+        self.command_timeout = self._get_command_timeout()
+        self.inactivity_timeout = self._get_inactivity_timeout()
         logging.getLogger(__name__).debug("FMCSSHClient initialised for %s", host)
 
     def __enter__(self) -> "FMCSSHClient":
@@ -89,10 +91,76 @@ class FMCSSHClient:
         lines = response.rstrip().splitlines()
         return lines[-1] if lines else ""
 
+    def _get_command_timeout(self) -> int:
+        try:
+            import configparser
+            import os
+            config = configparser.ConfigParser()
+            config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config', 'remote_access.properties')
+            if os.path.exists(config_path):
+                config.read(config_path)
+                return int(config.get('DEFAULT', 'command_timeout', fallback='30'))
+        except Exception:
+            pass
+        return 30
+
+    def _get_inactivity_timeout(self) -> int:
+        try:
+            import configparser
+            import os
+            config = configparser.ConfigParser()
+            config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config', 'remote_access.properties')
+            if os.path.exists(config_path):
+                config.read(config_path)
+                return int(config.get('DEFAULT', 'inactivity_timeout', fallback='30'))
+        except Exception:
+            pass
+        return 30
+
     def run_command(self, command: str) -> str:
-        response = self._send_and_wait(command, ':~#')
-        self.prompt = self._extract_prompt(response)
-        lines = response.rstrip().splitlines()
+        import sys
+        import select
+        if not self.channel:
+            raise RuntimeError("SSH channel is not open")
+        self.channel.send(command + "\n")
+        buff = ""
+        start = time.time()
+        prompt = ':~#'
+        timeout = self.command_timeout
+        inactivity_timeout = self.inactivity_timeout
+        last_data_time = time.time()
+        while True:
+            data_received = False
+            while self.channel.recv_ready():
+                data = self.channel.recv(1024).decode("utf-8")
+                print(data, end='', flush=True)
+                buff += data
+                data_received = True
+                last_data_time = time.time()
+                # Check if last non-empty line ends with prompt
+                lines = buff.rstrip().splitlines()
+                non_empty_lines = [line for line in lines if line.strip()]
+                if non_empty_lines and non_empty_lines[-1].strip().endswith(prompt):
+                    return "\n".join(lines[:-1]) + "\n" if len(lines) > 1 else ""
+            # Allow user to send input if needed (for interactive commands)
+            if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
+                user_input = sys.stdin.readline()
+                self.channel.send(user_input)
+                last_data_time = time.time()
+            if not data_received:
+                # Final prompt check after inactivity
+                lines = buff.rstrip().splitlines()
+                non_empty_lines = [line for line in lines if line.strip()]
+                if non_empty_lines and non_empty_lines[-1].strip().endswith(prompt):
+                    break
+                if time.time() - last_data_time > inactivity_timeout:
+                    break
+            if time.time() - start > timeout:
+                print(f"\nError: Timeout waiting for command to complete (>{timeout}s)")
+                break
+            time.sleep(0.1)
+        self.prompt = self._extract_prompt(buff)
+        lines = buff.rstrip().splitlines()
         return "\n".join(lines[:-1]) + "\n" if len(lines) > 1 else ""
 
     def close(self):

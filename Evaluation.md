@@ -23,7 +23,7 @@
     ![GHCP Code Improvements](screenshots/GHCP_Code_improvements.png)
     So, when prompted with more clarity, Codex responded with appropriate suggestions:
     ![Codex Improvement Suggestions](screenshots/Codex_improvement_suggestions.png)
-  * 
+  * Use Codex in tandem with an AI tool supporting IDE for easy testing of simple features. Otherwise, it will be essential to write all Unit and Integration tests. Because, Codex will be able to run all the tests only as a part of branch build.
 
 
 ### Thoughts about firepower integration

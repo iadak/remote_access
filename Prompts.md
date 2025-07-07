@@ -30,4 +30,7 @@ I changed my mind. Since password can have special characters, we could have iss
 ### Prompt 5
 Did you not need to change the test client code? Also, can you please change the config file from ```app.properties``` to ```remote_access.properties```?
 
+### Prompt 6
+Looks like the current code appends its own prompt ```fmc#``` and overwrites the prompt received from the server. Actually, response to every command is received from the server and the server prompt is appended at the end of response. The code should extract the prompt from the response and use it for accepting new commands instead of using its own. This prompt may look like ```<user>@<host>:~#```. The prompt is separated from the response of the command by a. new line. Can you refactor the code to extract this prompt and print it in the console so that the next command against this prompt? You can leave a space after displaying the prompt for better readability of the commands. Please ensure to remove the existing prompt ```fmc#```
+
 
