@@ -15,7 +15,7 @@
     This is good for addressing comments that may need large changes. However, for a minor comment some way of allowing online edits would be good (with auditing capability).
   * How do we revert changes (without prompting)?
   * Can't select models like local IDE based development.
-  * Is there a way to invoke Codex from GitHub code brower directly?
+  * Is there a way to invoke Codex from GitHub code brower directly? E.g. While browsing the code I would like to make improvements / edits in the code using Codex. What's the recommended way to start a Codex Workflow or is it that Codex is not meant for such use cases?
 
 ### General experience about prompt response
 * Pros
