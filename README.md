@@ -35,3 +35,17 @@ with FMCSSHClient("10.0.0.1", "p@ssw0rd", port=22) as client:
     print(client.run_command("ls"))
 ```
 
+Usage (Edit [config](config/remote_access.properties) to update ```password```)
+```
+(venv) IADAK-M-WV4X:remote_access iadak$ python3 fmc_ssh/main.py -s u32c01p10-vrouter.cisco.com -P 12502
+root@firepower:~# fmc# grep MODEL /etc/sf/ims.conf
+grep MODEL /etc/sf/ims.conf
+UPGRADE_PULL_DISABLE_FOR_MODELS="63 66 69 72"
+MODEL_CLASS="Defense Center"
+MODELNUMBER=66
+MODEL="Cisco Secure Firewall Management Center for VMware"
+MODEL_TYPE=CONSOLE
+MODELID=E
+FAC_MODEL_ID=T
+root@firepower:~# fmc# 
+```
