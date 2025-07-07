@@ -5,7 +5,7 @@ This repository provides a simple Python utility to connect to a Firepower Manag
 ## Requirements
 
 - Python 3.8+
-- [`paramiko`](https://pypi.org/project/paramiko/) library
+- [`pexpect`](https://pypi.org/project/pexpect/) library
 
 ## Usage
 
