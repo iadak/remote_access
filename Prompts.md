@@ -21,4 +21,13 @@ I understand that it is a substantial set of requirements to initiate the repo. 
 ### Prompt 2
 Check the project and find places for improvement. Please inspect the code with emphasis on code structure, input / output validation, error handling, testability, code duplication and overall robustness.
 
+### Prompt 3
+Right now the code works with an assumption that the SSH port to the server has a fixed value of 22. However, it may be possible that the server could be behind a NAT and the SSH port may be forwarded as a different port number. So, please re-factor the code to allow for an optional port number field. If the port number is omitted, assume 22 as default value. Please ensure that you would be making incremental code changes by keeping the existing design, syntax and flow of code intact.
+
+### Prompt 4
+I changed my mind. Since password can have special characters, we could have issues passing the password in a command-line. Assume that Password will be configured as a field called "password" in a properties file called ```config/app.properties```. Throw an error if the field is not populated. Do not pass ```password``` any more in the command-line. Provide the details about the config in the help option of the script. Can you do it?
+
+### Prompt 5
+Did you not need to change the test client code? Also, can you please change the config file from ```app.properties``` to ```remote_access.properties```?
+
 
