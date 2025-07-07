@@ -1,15 +1,21 @@
 import sys
-import os
 import types
+import os
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
-# Provide a simple pexpect stub so tests can run without the real dependency.
-pexpect_stub = types.ModuleType("pexpect")
-pexpect_stub.spawn = MagicMock()
-pexpect_stub.exceptions = types.SimpleNamespace(EOF=Exception, TIMEOUT=Exception)
-sys.modules.setdefault("pexpect", pexpect_stub)
-
+# Provide a simple paramiko stub so tests can run without the real dependency.
+paramiko_stub = types.ModuleType("paramiko")
+paramiko_stub.AutoAddPolicy = object
+class _SSHClient:
+    def set_missing_host_key_policy(self, *a, **kw):
+        pass
+    def connect(self, *a, **kw):
+        pass
+    def invoke_shell(self, *a, **kw):
+        return MagicMock()
+paramiko_stub.SSHClient = _SSHClient
+sys.modules.setdefault("paramiko", paramiko_stub)
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from fmc_ssh.client import FMCSSHClient
@@ -23,7 +29,7 @@ class TestFMCSSHClient(unittest.TestCase):
             FMCSSHClient('host', '')
 
     def test_run_command_strips_prompt(self):
-        client = FMCSSHClient('1.2.3.4', 'pass', session=MagicMock())
+        client = FMCSSHClient('1.2.3.4', 'pass', ssh_client=MagicMock())
         client.prompt = ''
         client._send_and_wait = MagicMock(return_value='out\nroot@host:~# ')
         result = client.run_command('ls')
@@ -32,7 +38,7 @@ class TestFMCSSHClient(unittest.TestCase):
         self.assertEqual(client.prompt, 'root@host:~#')
 
     def test_context_manager_calls_connect_and_close(self):
-        client = FMCSSHClient('1.2.3.4', 'pass', session=MagicMock())
+        client = FMCSSHClient('1.2.3.4', 'pass', ssh_client=MagicMock())
         client.connect = MagicMock()
         client.close = MagicMock()
         with client as c:
@@ -41,13 +47,13 @@ class TestFMCSSHClient(unittest.TestCase):
         client.close.assert_called_once()
 
     def test_connect_uses_given_port(self):
-        with patch('fmc_ssh.client.pexpect.spawn') as spawn:
-            spawn.return_value = MagicMock()
-            client = FMCSSHClient('1.2.3.4', 'pass', port=2222)
-            client._wait_for_prompt = MagicMock()
-            client._send_and_wait = MagicMock()
-            client.connect()
-            spawn.assert_called_with('ssh admin@1.2.3.4 -p 2222', encoding='utf-8', timeout=30)
+        ssh_client = MagicMock()
+        ssh_client.invoke_shell.return_value = MagicMock()
+        client = FMCSSHClient('1.2.3.4', 'pass', port=2222, ssh_client=ssh_client)
+        client._wait_for_prompt = MagicMock()
+        client._send_and_wait = MagicMock()
+        client.connect()
+        ssh_client.connect.assert_called_with(hostname='1.2.3.4', username='admin', password='pass', port=2222)
 
 
 if __name__ == '__main__':
