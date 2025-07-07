@@ -28,6 +28,7 @@ class FMCSSHClient:
         self.port = port
         self.client: paramiko.SSHClient = ssh_client or paramiko.SSHClient()
         self.channel = None
+        self.prompt = ""
         logging.getLogger(__name__).debug("FMCSSHClient initialised for %s", host)
 
     def __enter__(self) -> "FMCSSHClient":
@@ -55,7 +56,8 @@ class FMCSSHClient:
             self._wait_for_prompt('>')
             self._send_and_wait('expert', ':~$')
             self._send_and_wait('sudo su -', 'Password:')
-            self._send_and_wait(self.password, ':~#')
+            output = self._send_and_wait(self.password, ':~#')
+            self.prompt = self._extract_prompt(output)
             logger.debug("Connected to %s", self.host)
         except paramiko.SSHException as exc:
             logger.error("SSH connection failed: %s", exc)
@@ -82,8 +84,16 @@ class FMCSSHClient:
             time.sleep(0.1)
         return buff
 
+    @staticmethod
+    def _extract_prompt(response: str) -> str:
+        lines = response.rstrip().splitlines()
+        return lines[-1] if lines else ""
+
     def run_command(self, command: str) -> str:
-        return self._send_and_wait(command, ':~#')
+        response = self._send_and_wait(command, ':~#')
+        self.prompt = self._extract_prompt(response)
+        lines = response.rstrip().splitlines()
+        return "\n".join(lines[:-1]) + "\n" if len(lines) > 1 else ""
 
     def close(self):
         if self.client:
@@ -94,7 +104,8 @@ class FMCSSHClient:
     def interactive_shell(self):
         try:
             while True:
-                cmd = input('fmc# ')
+                prompt = f"{self.prompt} " if self.prompt else ""
+                cmd = input(prompt)
                 if cmd.strip().lower() in ('exit', 'quit'):
                     break
                 if not cmd.strip():
