@@ -1,0 +1,47 @@
+import sys
+import types
+import unittest
+from unittest.mock import MagicMock
+
+# Provide a simple paramiko stub so tests can run without the real dependency.
+paramiko_stub = types.ModuleType("paramiko")
+paramiko_stub.AutoAddPolicy = object
+class _SSHClient:
+    def set_missing_host_key_policy(self, *a, **kw):
+        pass
+    def connect(self, *a, **kw):
+        pass
+    def invoke_shell(self, *a, **kw):
+        return MagicMock()
+paramiko_stub.SSHClient = _SSHClient
+sys.modules.setdefault("paramiko", paramiko_stub)
+
+from fmc_ssh.client import FMCSSHClient
+
+
+class TestFMCSSHClient(unittest.TestCase):
+    def test_invalid_parameters(self):
+        with self.assertRaises(ValueError):
+            FMCSSHClient('', 'pass')
+        with self.assertRaises(ValueError):
+            FMCSSHClient('host', '')
+
+    def test_run_command_delegates_to_send_and_wait(self):
+        client = FMCSSHClient('1.2.3.4', 'pass', ssh_client=MagicMock())
+        client._send_and_wait = MagicMock(return_value='ok')
+        result = client.run_command('ls')
+        client._send_and_wait.assert_called_with('ls', ':~#')
+        self.assertEqual(result, 'ok')
+
+    def test_context_manager_calls_connect_and_close(self):
+        client = FMCSSHClient('1.2.3.4', 'pass', ssh_client=MagicMock())
+        client.connect = MagicMock()
+        client.close = MagicMock()
+        with client as c:
+            self.assertIs(c, client)
+            client.connect.assert_called_once()
+        client.close.assert_called_once()
+
+
+if __name__ == '__main__':
+    unittest.main()
