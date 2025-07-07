@@ -8,9 +8,13 @@
 * Cons
   * Did not find a way to edit the file before raising PR. See [this](screenshots/Cant_edit.png). What I instead had to do was to add a comment (so that the comments are audited I guess) and navigate to the left pane to let Codex address the comment in the code. Codex did address my comments as you see [here](screenshots/address_comments_before_commit.png). This is good for addressing comments that may need large changes. However, for a minor comment some way of allowing online edits would be good (with auditing capability).
   * How do we revert changes (without prompting)?
-  * 
+  * Can't select models like local IDE based development.
+  * Is there a way to invoke Codex from GitHub code brower directly?
 
 ### General experience about prompt response
+* Pros
+  * Quality of generated code of the first implementation was not robust. When reviewed with GitHub CoPilot, I found scopes of improvement as illustrated [here](screenshots/GHCP_Code_improvements.png). So, when prompted with more clarity, Codex responded with appropriate [suggestions](screenshots/Codex_improvement_suggestions.png).
+  * 
 
 
 ### Thoughts about firepower integration

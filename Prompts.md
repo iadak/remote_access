@@ -17,3 +17,8 @@ Please remember the following while implementing.
 * Use Python as implementation language
 
 I understand that it is a substantial set of requirements to initiate the repo. I hope you will do a good job with it.
+
+### Prompt 2
+Check the project and find places for improvement. Please inspect the code with emphasis on code structure, input / output validation, error handling, testability, code duplication and overall robustness.
+
+
