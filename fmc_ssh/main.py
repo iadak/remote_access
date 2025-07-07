@@ -32,6 +32,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Connect to FMC server via SSH")
     parser.add_argument('-s', '--server', required=True, help='FMC server IP address')
     parser.add_argument('-p', '--password', required=True, help='Password for admin user')
+    parser.add_argument('-P', '--port', type=int, default=22, help='SSH port number (default 22)')
     parser.add_argument('-c', '--command', help='Command to run on the server')
     args = parser.parse_args()
     if not args.password.strip():
@@ -44,7 +45,7 @@ def parse_args():
 def main():
     args = parse_args()
     try:
-        with FMCSSHClient(args.server, args.password) as client:
+        with FMCSSHClient(args.server, args.password, port=args.port) as client:
             if args.command:
                 output = client.run_command(args.command)
                 print(output, end='')

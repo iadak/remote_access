@@ -42,6 +42,15 @@ class TestFMCSSHClient(unittest.TestCase):
             client.connect.assert_called_once()
         client.close.assert_called_once()
 
+    def test_connect_uses_given_port(self):
+        ssh_client = MagicMock()
+        ssh_client.invoke_shell.return_value = MagicMock()
+        client = FMCSSHClient('1.2.3.4', 'pass', port=2222, ssh_client=ssh_client)
+        client._wait_for_prompt = MagicMock()
+        client._send_and_wait = MagicMock()
+        client.connect()
+        ssh_client.connect.assert_called_with(hostname='1.2.3.4', username='admin', password='pass', port=2222)
+
 
 if __name__ == '__main__':
     unittest.main()

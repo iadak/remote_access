@@ -14,6 +14,7 @@ class FMCSSHClient:
         host: str,
         password: str,
         user: str = "admin",
+        port: int = 22,
         ssh_client: Optional[paramiko.SSHClient] = None,
     ) -> None:
         if not host or not self._is_valid_host(host):
@@ -24,6 +25,7 @@ class FMCSSHClient:
         self.host = host
         self.user = user
         self.password = password
+        self.port = port
         self.client: paramiko.SSHClient = ssh_client or paramiko.SSHClient()
         self.channel = None
         logging.getLogger(__name__).debug("FMCSSHClient initialised for %s", host)
@@ -48,7 +50,7 @@ class FMCSSHClient:
         logger = logging.getLogger(__name__)
         self.client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
-            self.client.connect(hostname=self.host, username=self.user, password=self.password)
+            self.client.connect(hostname=self.host, username=self.user, password=self.password, port=self.port)
             self.channel = self.client.invoke_shell()
             self._wait_for_prompt('>')
             self._send_and_wait('expert', ':~$')
